@@ -11,3 +11,6 @@ mlruns
 model-test
 .jupyter/
 .ipynb_checkpoints/
+avaliation.py
+predict.py
+train_ex.py

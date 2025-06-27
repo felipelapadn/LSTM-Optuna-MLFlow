@@ -12,7 +12,6 @@ class TrainModel:
     def __init__(self, model):
         self.model = model
         
-
     def champion_callback(self, study, frozen_trial):
         """
         Logging callback that will report when a new trial iteration improves upon existing
@@ -43,10 +42,8 @@ class TrainModel:
                     f"Initial trial {frozen_trial.number} achieved value: {frozen_trial.value}")
     
     def run(self):
-        
         with mlflow.start_run(run_name="run-optuna-exp-lstm", nested=True):
             study = optuna.create_study(direction="minimize")
-
             study.optimize(self.model.objective, n_trials=5, callbacks=[self.champion_callback])
 
             mlflow.log_params(study.best_params)
@@ -61,6 +58,3 @@ class TrainModel:
                     "feature_set_version": 1,
                 }
             )
-
-            # # Get the logged model uri so that we can load it from the artifact store
-            # model_uri = mlflow.get_artifact_uri(artifact_path)

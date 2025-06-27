@@ -46,16 +46,13 @@ class LSTMModelOptimization:
                 "learning_rate": trial.suggest_float('learning_rate', 1e-4, 1e-2, log=True),  
                 "batch_size": trial.suggest_categorical('batch_size', [32, 64, 128]), # aqui é legal usar o suggest_categorical
             }                                                                           # para ser um valor sem variação dentre esses da lista
-            
-
 
             model = self.create_model(params)
-
             model.fit(
                 self.x_train, self.y_train,
                 validation_split=0.2,
                 epochs=50,
-                batch_size=params["batch_size"],
+                batch_size=int(params["batch_size"]),
                 callbacks=[self.callback],
                 verbose=0
             )
