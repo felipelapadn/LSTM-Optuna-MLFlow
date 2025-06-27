@@ -2,9 +2,9 @@ import os
 import mlflow
 from dotenv import load_dotenv
 
-from train_model import TrainModel
-from lstm_model import LSTMModelOptimization
-from utils import compare_and_register_model, make_train_test
+from src.train_model import TrainModel
+from src.lstm_model import LSTMModelOptimization
+from src.utils import compare_and_register_model, make_train_test
 
 load_dotenv()
 

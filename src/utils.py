@@ -1,6 +1,6 @@
 import mlflow
 import pandas as pd
-from lstm_model import LSTMModelOptimization
+from src.lstm_model import LSTMModelOptimization
 from sklearn.model_selection import train_test_split
 from mlflow.tracking import MlflowClient
 
