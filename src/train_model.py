@@ -1,10 +1,9 @@
+import os
 import mlflow
 import math
 import optuna
-
-
-mlflow.set_tracking_uri("http://localhost:5000")
-mlflow.set_experiment(experiment_id=371857808035113852)
+from dotenv import load_dotenv
+load_dotenv()
 
 class TrainModel:
 
@@ -40,8 +39,16 @@ class TrainModel:
                 print(
                     f"Initial trial {frozen_trial.number} achieved value: {frozen_trial.value}")
     
-    def run(self):
-        with mlflow.start_run(run_name="run-optuna-exp-lstm", nested=True):
+    def run(self, run_name):
+        """
+        Executa a busca de hiperparâmetros para o modelo LSTM usando Optuna.
+
+        Esta função instancia um estudo do Optuna para realizar a otimização dos
+        hiperparâmetros do modelo LSTM. A cada iteração, as métricas de desempenho
+        são registradas no MLflow para rastreamento e análise dos experimentos.
+        """
+        with mlflow.start_run(experiment_id=os.getenv("EXPERIMENT_ID"), 
+                              run_name=run_name, nested=True):
             study = optuna.create_study(direction="minimize")
             study.optimize(self.model.objective, n_trials=5, callbacks=[self.champion_callback])
 

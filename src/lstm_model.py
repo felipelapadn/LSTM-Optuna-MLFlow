@@ -1,9 +1,9 @@
+import os
 import keras
 import mlflow
 import math
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, LSTM
-
 
 class LSTMModelOptimization:
     
@@ -17,6 +17,16 @@ class LSTMModelOptimization:
                                                 patience=30, restore_best_weights=True)
 
     def create_model(self, params):
+        """
+        Cria uma instância do modelo LSTM com base nos parâmetros fornecidos.
+
+        Args:
+            params (dict): Dicionário contendo os hiperparâmetros para instanciar o modelo,
+                        geralmente sugeridos por um trial do Optuna.
+
+        Returns:
+            keras.models.Sequential: Modelo LSTM do Keras construído com as camadas definidas.
+        """
         model = Sequential()
         model.add(LSTM(units=int(params["units"]), return_sequences=True, input_shape=(
             int(params["input_shape"]), 1)))
@@ -35,8 +45,20 @@ class LSTMModelOptimization:
         return model
 
     def objective(self, trial):
-        
-        with mlflow.start_run(run_name=f"run-optuna-exp-{trial.number}-lstm", nested=True):
+        """
+        Função objetivo utilizada pelo Optuna para otimização do modelo LSTM.
+
+        Durante cada trial, o modelo é treinado com os hiperparâmetros sugeridos e suas
+        métricas de desempenho são registradas no MLflow.
+
+        Args:
+            trial (optuna.trial.Trial): Objeto trial fornecido pelo Optuna, usado para sugerir os hiperparâmetros.
+
+        Returns:
+            float: Métrica de erro quadrático médio (MSE) do modelo no conjunto de validação.
+        """
+        with mlflow.start_run(experiment_id=os.getenv("EXPERIMENT_ID"),
+                              run_name=f"run-optuna-exp-{trial.number}", nested=True):
             params = {
                 "input_shape": self.x_train.shape[1],
                 "units": trial.suggest_int('units', 32, 256, step=32),
@@ -66,7 +88,17 @@ class LSTMModelOptimization:
         return score[1]
     
     def train_model(self, params):
-        
+        """
+        Função responsavel por fazer o treinamento do modelo de maneira direta, sem o Optuna.
+
+        Args:
+            params (dict): Dicionário contendo os hiperparâmetros para instanciar o modelo,
+                        geralmente sugeridos por um trial do Optuna.
+
+        Returns:
+            keras.models.Sequential: Modelo LSTM do Keras construído com as camadas definidas.
+            float: Métrica de erro quadrático médio (MSE) do modelo no conjunto de validação.
+        """
         model = self.create_model(params)
 
         model.fit(
