@@ -1,7 +1,6 @@
 import mlflow
 import math
 import optuna
-import pandas as pd
 
 
 mlflow.set_tracking_uri("http://localhost:5000")
