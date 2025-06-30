@@ -27,22 +27,32 @@ class LSTMModelOptimization:
         Returns:
             keras.models.Sequential: Modelo LSTM do Keras construído com as camadas definidas.
         """
-        model = Sequential()
-        model.add(LSTM(units=int(params["units"]), return_sequences=True, input_shape=(
-            int(params["input_shape"]), 1)))
-        model.add(Dropout(float(params["dropout"])))
+        
+        required_params = [
+            "input_shape", "units", "dropout", "n_layers", 
+            "optimizer", "learning_rate", "batch_size"
+        ]
 
-        for _ in range(int(params["n_layers"]) - 1):
-            model.add(LSTM(units=int(params["units"]), return_sequences=True))
+        missing = [p for p in required_params if p not in params]
+        if missing:
+            raise ValueError(f"Parâmetros ausentes: {missing}")
+        else:
+            model = Sequential()
+            model.add(LSTM(units=int(params["units"]), return_sequences=True, input_shape=(
+                int(params["input_shape"]), 1)))
             model.add(Dropout(float(params["dropout"])))
 
-        model.add(LSTM(units=int(params["units"])))
-        model.add(Dropout(float(params["dropout"])))
-        model.add(Dense(1, activation='linear'))
-        model.compile(optimizer=params["optimizer"],
-                    loss='mean_squared_error', metrics=['mse'])
+            for _ in range(int(params["n_layers"]) - 1):
+                model.add(LSTM(units=int(params["units"]), return_sequences=True))
+                model.add(Dropout(float(params["dropout"])))
 
-        return model
+            model.add(LSTM(units=int(params["units"])))
+            model.add(Dropout(float(params["dropout"])))
+            model.add(Dense(1, activation='linear'))
+            model.compile(optimizer=params["optimizer"],
+                        loss='mean_squared_error', metrics=['mse'])
+
+            return model
 
     def objective(self, trial):
         """

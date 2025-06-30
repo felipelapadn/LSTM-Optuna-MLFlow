@@ -5,6 +5,8 @@ import optuna
 from dotenv import load_dotenv
 load_dotenv()
 
+mlflow.set_experiment(os.getenv("EXPERIMENT_NAME"))
+
 class TrainModel:
 
     def __init__(self, model):
@@ -47,8 +49,7 @@ class TrainModel:
         hiperparâmetros do modelo LSTM. A cada iteração, as métricas de desempenho
         são registradas no MLflow para rastreamento e análise dos experimentos.
         """
-        with mlflow.start_run(experiment_id=os.getenv("EXPERIMENT_ID"), 
-                              run_name=run_name, nested=True):
+        with mlflow.start_run(run_name=run_name, nested=True):
             study = optuna.create_study(direction="minimize")
             study.optimize(self.model.objective, n_trials=5, callbacks=[self.champion_callback])
 

@@ -3,6 +3,7 @@ import pandas as pd
 from src.lstm_model import LSTMModelOptimization
 from sklearn.model_selection import train_test_split
 from mlflow.tracking import MlflowClient
+from mlflow.exceptions import RestException
 
 client = MlflowClient()
 
@@ -33,7 +34,7 @@ def make_train_test(path, target):
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     return X_train, X_test, y_train, y_test
 
-def compare_and_register_model(exp_id, model_name_, X_train, X_test, y_train, y_test, n_runs=5):
+def compare_and_register_model(experiment_name, model_name_, X_train, X_test, y_train, y_test, n_runs=5):
     """
     Compara os modelos treinados pelo Optuna nas últimas `n_runs` execuções com as
     métricas da versão mais recente do modelo salvo.
@@ -49,16 +50,25 @@ def compare_and_register_model(exp_id, model_name_, X_train, X_test, y_train, y_
     Returns:
         dict: Dicionário contendo as métricas de comparação entre os modelos testados e o modelo salvo.
     """
+    experiment = client.get_experiment_by_name(experiment_name)
+
+    if experiment is None:
+        raise ValueError(f"Experimento '{experiment_name}' não encontrado.")
+
     runs = client.search_runs(
-        experiment_ids=[exp_id],                  
-        max_results=n_runs
+        experiment_ids=[experiment.experiment_id],
+        max_results=10
     )
 
     model_lstm_obj = LSTMModelOptimization(X_train, X_test, y_train, y_test)
     model_name = model_name_
     model_version = "latest"
 
-    versions = client.get_latest_versions(model_name)
+    try:
+        versions = client.get_latest_versions(model_name)
+    except RestException:
+        versions = []
+        
     if versions == []:
         model_trained, score = model_lstm_obj.train_model(runs[0].data.params)
         mlflow.keras.log_model(model_trained, "model", registered_model_name=model_name)
@@ -68,10 +78,13 @@ def compare_and_register_model(exp_id, model_name_, X_train, X_test, y_train, y_
         latest_score = model.evaluate(X_test, y_test, verbose=0)
         model_to_att = None
         for run in runs:
-            model_trained, score = model_lstm_obj.train_model(run.data.params)
-            print(f"Score: {score[0]} | Latest Score: {latest_score[0]}")
-            if score[0] < latest_score[0]:
-                model_to_att = model_trained
+            try:
+                model_trained, score = model_lstm_obj.train_model(run.data.params)
+                print(f"Score: {score[0]} | Latest Score: {latest_score[0]}")
+                if score[0] < latest_score[0]:
+                    model_to_att = model_trained
+            except:
+                pass
 
         if model_to_att is not None:
             mlflow.keras.log_model(model_to_att, "model", registered_model_name=model_name)
